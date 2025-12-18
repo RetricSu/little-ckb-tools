@@ -1,0 +1,23 @@
+{
+  "name": "ckb-nostr-checker",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "scripts": {
+    "build": "tsup index.ts --format esm,cjs --dts",
+    "start": "npm run build && node dist/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@ckb-ccc/ccc": "^1.1.22",
+    "@ckb-ccc/core": "^1.12.2",
+    "@types/node": "^25.0.3",
+    "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.1"
+  }
+}
