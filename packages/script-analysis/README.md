@@ -1,10 +1,15 @@
-# CKB Script Analysis
+# Script Analysis
 
-A simple script to check cells and capacity associated with configurable scripts on CKB Mainnet.
+A tool to analyze and list live cells associated with configurable scripts on CKB Mainnet. Useful for finding outpoints of deployed scripts.
 
 ## Usage
 
-To check different scripts, edit the `scripts` array in `index.ts` and add your script configurations.
+Configure the scripts you want to analyze by editing the `scripts` array in `index.ts`, then run:
+
+```bash
+pnpm build
+pnpm start
+```
 
 Each script config includes:
 
@@ -24,9 +29,4 @@ Example:
 }
 ```
 
-Then run:
-
-```bash
-pnpm run build
-pnpm start
-```
+The tool will output statistics about found cells and list the top capacity cells with their outpoints, which can then be used with `script-download` to fetch the actual script binaries.

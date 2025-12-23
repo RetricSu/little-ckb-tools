@@ -1,32 +1,41 @@
-# CKB Script Analysis
+# Script Download
 
-A simple script to check cells and capacity associated with configurable scripts on CKB Mainnet.
+A tool to download CKB script binaries from live cells on the CKB Mainnet.
 
 ## Usage
 
-To check different scripts, edit the `scripts` array in `index.ts` and add your script configurations.
-
-Each script config includes:
-
-- `name`: A descriptive name for the script
-- `codeHash`: The code hash of the script
-- `hashType`: Either "data" or "type"
-- `scriptType`: Either "lock" or "type"
-
-Example:
-
-```typescript
-{
-  name: "My Custom Script",
-  codeHash: "0x...",
-  hashType: "type",
-  scriptType: "lock",
-}
-```
-
-Then run:
+Download a script binary from a specific cell outpoint:
 
 ```bash
-pnpm run build
-pnpm start
+pnpm build
+pnpm start <outpoint> <output-file>
+```
+
+### Parameters
+
+- `outpoint`: The transaction hash and index in the format `txHash:index` (e.g., `0x1234...abcd:0`)
+- `output-file`: Path where the script binary will be saved (e.g., `script.bin`)
+
+### Example
+
+```bash
+pnpm start 0x641a89ad2f77721b803cd50d01351c1f308444072d5fa20088567196c0574c68:0 nostr-lock.bin 
+```
+
+This will:
+1. Fetch the cell data from the specified outpoint
+2. Save the binary data to `nostr-lock.bin`
+3. Generate a checksum file at `checksums.txt` in the format compatible with CKB script development toolchains
+
+## Checksum Format
+
+The generated checksum file follows the format used by CKB script development Makefiles:
+
+```
+sha256sum build/$(MODE)/* > $(CHECKSUM_FILE)
+```
+
+Example checksum file content:
+```
+a1b2c3d4...  script.bin
 ```

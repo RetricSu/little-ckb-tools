@@ -1,105 +1,89 @@
 import { ccc } from "@ckb-ccc/core";
-import type { ClientCollectableSearchKeyLike } from "@ckb-ccc/core/dist.commonjs/advancedBarrel";
-
-interface ScriptConfig {
-  name: string;
-  codeHash: string;
-  hashType: "data" | "type";
-  scriptType: "lock" | "type";
-}
-
-/**
- * Configurable script definitions. Add more scripts here to check different code hashes.
- */
-const scripts: ScriptConfig[] = [
-  {
-    name: "Nostr Binding Type",
-    codeHash:
-      "0xb56ea08c4b10b454ed3389bb0e504ecfc57dcfe3089a5030654525a2def2108e",
-    hashType: "type",
-    scriptType: "type",
-  },
-  {
-    name: "Nostr Lock",
-    codeHash:
-      "0x641a89ad2f77721b803cd50d01351c1f308444072d5fa20088567196c0574c68",
-    hashType: "type",
-    scriptType: "lock",
-  },
-];
+import { createHash } from "crypto";
+import { writeFileSync, mkdirSync } from "fs";
+import { dirname } from "path";
 
 async function main() {
+  const args = process.argv.slice(2);
+  if (args.length < 2) {
+    console.error("Usage: node dist/index.js <outpoint> <output-file>");
+    console.error("Example: node dist/index.js 0x1234...abcd:0 build/ckb-script-bin");
+    process.exit(1);
+  }
+
+  const outpointStr = args[0]!;
+  const outputFile = args[1]!;
+
+  // Parse outpoint
+  const [txHash, indexStr] = outpointStr.split(":");
+  if (!txHash || !indexStr) {
+    console.error("Invalid outpoint format. Expected: txHash:index");
+    process.exit(1);
+  }
+
+  const index = parseInt(indexStr, 10);
+  if (isNaN(index)) {
+    console.error("Invalid index in outpoint");
+    process.exit(1);
+  }
+
   const client = new ccc.ClientPublicMainnet();
 
-  console.log("--- CKB Script Analysis ---");
+  console.log("--- CKB Script Download ---");
   console.log(`Connecting to CKB Mainnet...`);
+  console.log(`Fetching cell: ${txHash}:${index}`);
 
-  const allCells: { [key: string]: ccc.Cell[] } = {};
+  try {
+    const outPoint = { txHash, index };
+    const cell = await client.getCell(outPoint);
 
-  for (const script of scripts) {
-    const searchKey: ClientCollectableSearchKeyLike = {
-      script: {
-        codeHash: script.codeHash,
-        hashType: script.hashType,
-        args: "0x",
-      },
-      scriptSearchMode: "prefix",
-      scriptType: script.scriptType,
-    };
-
-    const cells: ccc.Cell[] = [];
-    console.log(
-      `\nQuerying cells with ${script.name} Script, CodeHash: ${script.codeHash}...`
-    );
-
-    let totalCapacity = BigInt(0);
-    let cellCount = 0;
-
-    // Iterate through all live cells
-    for await (const cell of client.findCells(searchKey)) {
-      cellCount++;
-      totalCapacity += cell.cellOutput.capacity;
-      cells.push(cell);
+    if (!cell) {
+      console.error("Cell not found or not live");
+      process.exit(1);
     }
 
-    console.log("\n--- Results ---");
-    console.log(`Total Cells Found: ${cellCount}`);
-    console.log(`Total Capacity: ${ccc.fixedPointToString(totalCapacity)} CKB`);
-    console.log(`Total Capacity (Shannons): ${totalCapacity.toString()}`);
-    console.log("------------------------------");
+    console.log(`Cell found! Capacity: ${ccc.fixedPointToString(cell.cellOutput.capacity)} CKB`);
 
-    allCells[script.name] = cells;
-  }
-
-  await analyzeCells(allCells);
-
-  process.exit(0);
-}
-
-async function analyzeCells(allCells: { [key: string]: ccc.Cell[] }) {
-  console.log("\n--- Analytics ---");
-
-  for (const scriptName in allCells) {
-    const cells = allCells[scriptName];
-    if (!cells) continue;
-    console.log(`\nTop 10 Capacity Cells for ${scriptName}:`);
-    const sortedCells = cells.sort((a, b) =>
-      Number(b.cellOutput.capacity - a.cellOutput.capacity)
-    );
-    for (let i = 0; i < Math.min(10, sortedCells.length); i++) {
-      const cell = sortedCells[i];
-      console.log(
-        `${i + 1}. Capacity: ${ccc.fixedPointToString(
-          cell!.cellOutput.capacity
-        )} CKB (outpoint: ${cell!.outPoint.txHash}:${cell!.outPoint.index})`
-      );
+    // Get cell data
+    const cellData = cell.outputData;
+    if (!cellData || cellData.length === 0) {
+      console.error("Cell has no data");
+      process.exit(1);
     }
-  }
 
-  console.log("------------------------------");
+    const cellDataBytes = ccc.bytesFrom(cellData.slice(2), "hex");
+    console.log(`Cell data length: ${cellDataBytes.length} bytes`);
+
+    // Ensure output directory exists
+    const outputDir = dirname(outputFile);
+    mkdirSync(outputDir, { recursive: true });
+
+    // Save binary data
+    writeFileSync(outputFile, cellDataBytes);
+    console.log(`Saved script binary to: ${outputFile}`);
+
+    // Generate checksum
+    const hash = createHash("sha256");
+    hash.update(cellDataBytes);
+    const checksum = hash.digest("hex");
+
+    // Create checksum file in build/checksums-$(MODE).txt format
+    const checksumDir = `${outputDir}/checksums.txt`;
+    const checksumContent = `${checksum}  ${outputFile}\n`;
+
+    mkdirSync("build", { recursive: true });
+    writeFileSync(checksumDir, checksumContent);
+    console.log(`Generated checksum file: ${checksumDir}`);
+
+    console.log("--- Download Complete ---");
+    console.log(`Checksum: ${checksum}`);
+
+  } catch (error) {
+    console.error("Error downloading script:", error);
+    process.exit(1);
+  } finally {
+    process.exit(0);
+  }
 }
 
-main().catch((err) => {
-  console.error("Error executing script:", err);
-  process.exit(1);
-});
+main();
