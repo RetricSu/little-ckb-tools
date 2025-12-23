@@ -3,11 +3,10 @@ import { createHash } from "crypto";
 import { writeFileSync, mkdirSync } from "fs";
 import { dirname } from "path";
 
-async function main() {
-  const args = process.argv.slice(2);
+export async function runScriptDownload(args: string[]) {
   if (args.length < 2) {
-    console.error("Usage: node dist/index.js <outpoint> <output-file>");
-    console.error("Example: node dist/index.js 0x1234...abcd:0 build/ckb-script-bin");
+    console.error("Usage: little-ckb-tools script-download <outpoint> <output-file>");
+    console.error("Example: little-ckb-tools script-download 0x1234...abcd:0 script.bin");
     process.exit(1);
   }
 
@@ -86,4 +85,7 @@ async function main() {
   }
 }
 
-main();
+// Run if called directly
+if (import.meta.url === `file://${process.argv[1]}`) {
+  runScriptDownload(process.argv.slice(2));
+}
