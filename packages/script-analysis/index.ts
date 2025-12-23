@@ -31,7 +31,7 @@ const scripts: ScriptConfig[] = [
 async function main() {
   const client = new ccc.ClientPublicMainnet();
 
-  console.log("--- CKB Cell Checker ---");
+  console.log("--- CKB Script Analysis ---");
   console.log(`Connecting to CKB Mainnet...`);
 
   const allCells: { [key: string]: ccc.Cell[] } = {};
