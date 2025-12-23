@@ -28,10 +28,10 @@ const scripts: ScriptConfig[] = [
   },
 ];
 
-async function main() {
+export async function runScriptAnalysis() {
   const client = new ccc.ClientPublicMainnet();
 
-  console.log("--- CKB Cell Checker ---");
+  console.log("--- CKB Script Analysis ---");
   console.log(`Connecting to CKB Mainnet...`);
 
   const allCells: { [key: string]: ccc.Cell[] } = {};
@@ -99,7 +99,10 @@ async function analyzeCells(allCells: { [key: string]: ccc.Cell[] }) {
   console.log("------------------------------");
 }
 
-main().catch((err) => {
-  console.error("Error executing script:", err);
-  process.exit(1);
-});
+// Run if called directly
+if (import.meta.url === `file://${process.argv[1]}`) {
+  runScriptAnalysis().catch((err) => {
+    console.error("Error executing script:", err);
+    process.exit(1);
+  });
+}

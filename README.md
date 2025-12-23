@@ -1,32 +1,33 @@
-# CKB Cell Checker
+# Little CKB Tools
 
-A simple script to check cells and capacity associated with configurable scripts on CKB Mainnet.
+A monorepo of tools for CKB (Nervos Network) development.
+
+## Packages
+
+- [ckb-cell-checker](./packages/ckb-cell-checker) - A tool to check cells and capacity associated with configurable scripts on CKB Mainnet.
+- [script-analysis](./packages/script-analysis) - Analyzes and lists cells for configured scripts on CKB Mainnet.
+- [script-download](./packages/script-download) - Downloads CKB script binaries from live cells and generates checksums.
+- [cli](./packages/cli) - Command-line interface for all tools.
+
+## Getting Started
+
+```bash
+pnpm install
+pnpm build
+```
+
+You can also install the CLI globally:
+
+```bash
+pnpm add -g @little-ckb-tools/cli
+```
+
+Then use:
+
+```bash
+little-ckb-tools --help
+```
 
 ## Usage
 
-To check different scripts, edit the `scripts` array in `index.ts` and add your script configurations.
-
-Each script config includes:
-
-- `name`: A descriptive name for the script
-- `codeHash`: The code hash of the script
-- `hashType`: Either "data" or "type"
-- `scriptType`: Either "lock" or "type"
-
-Example:
-
-```typescript
-{
-  name: "My Custom Script",
-  codeHash: "0x...",
-  hashType: "type",
-  scriptType: "lock",
-}
-```
-
-Then run:
-
-```bash
-pnpm run build
-pnpm start
-```
+Each package has its own README with specific usage instructions.
